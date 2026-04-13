@@ -1,4 +1,5 @@
 const pool = require("../db/connection");
+
 const getItems = async (req, res) => {
   try {
     const { status } = req.query;
@@ -9,17 +10,36 @@ const getItems = async (req, res) => {
       sql += " WHERE status = ?";
       params.push(status);
     }
+
     sql += " ORDER BY created_at DESC";
 
     const [rows] = await pool.query(sql, params);
 
     res.json(rows);
   } catch (error) {
-    console.error("getItems error :", error);
+    console.error("getItems error:", error);
     res.status(500).json({ message: "상품 조회 실패" });
+  }
+};
+
+const getSummary = async (req, res) => {
+  try {
+    const sql = `
+      SELECT COALESCE(SUM(price), 0) AS totalSavedMoney
+      FROM items
+      WHERE status = 'saved'
+    `;
+
+    const [rows] = await pool.query(sql);
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("getSummary error:", error);
+    res.status(500).json({ message: "통계 조회 실패" });
   }
 };
 
 module.exports = {
   getItems,
+  getSummary,
 };
